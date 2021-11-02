@@ -6,6 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import os
+from sys import platform
 
 # span attrs={'class':'title ellipsized name'}
 books = [['Génesis', 'Éxodo', 'Levítico', 'Números', 'Deuteronomio', 'Josué', 'Jueces', 'Rut', '1 Samuel', '2 Samuel', '1 Reyes', '2 Reyes', '1 Crónicas', '2 Crónicas', 'Esdras', 'Nehemías', 'Ester', 'Job', 'Salmos', 'Proverbios', 'Eclesiastés', 'El Cantar de los Cantares', 'Isaías', 'Jeremías', 'Lamentaciones', 'Ezequiel', 'Daniel', 'Oseas', 'Joel', 'Amós', 'Abdías', 'Jonás', 'Miqueas', 'Nahúm', 'Habacuc', 'Sofonías', 'Ageo', 'Zacarías', 'Malaquías', 'Mateo', 'Marcos', 'Lucas', 'Juan', 'Hechos', 'Romanos', '1 Corintios', '2 Corintios', 'Gálatas', 'Efesios', 'Filipenses', 'Colosenses', '1 Tesalonicenses', '2 Tesalonicenses', '1 Timoteo', '2 Timoteo', 'Tito', 'Filemón', 'Hebreos', 'Santiago', '1 Pedro', '2 Pedro', '1 Juan', '2 Juan', '3 Juan', 'Judas', 'Apocalipsis'],['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy', 'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel', '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs', 'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos', 'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah', 'Haggai', 'Zechariah', 'Malachi', 'Matthew', 'Mark', 'Luke', 'John', 'Acts', 'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians', 'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter', '2 Peter', '1 John', '2 John', '3 John', 'Jude', 'Revelation'],['Mateu', 'Marc', 'Lluc', 'Joan', 'Fets', 'Romans', '1 Corintis', '2 Corintis', 'Gàlates', 'Efesis', 'Filipencs', 'Colossencs', '1 Tessalonicencs', '2 Tessalonicencs', '1 Timoteu', '2 Timoteu', 'Titus', 'Filemó', 'Hebreus', 'Jaume', '1 Pere', '2 Pere', '1 Joan', '2 Joan', '3 Joan', 'Judes', 'Apocalipsi']]
@@ -31,18 +32,23 @@ def Inputs():
     return language, cbook, chapter.ans, verse
 def DefaultInputs():
     language = 1
-    cbook = "Proverbs"
-    chapter = 11
-    verse = 0
+    cbook = "Philemon"
+    chapter = 1
+    verse = 11
     return language, cbook, chapter, verse
-def Scrap(language,cbook,chapter,verse=None):
+def Scrap(language,cbook,chapter,verse=None,save=False):
     book_chosen = cbook
     chapter_chosen = chapter
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-notifications")
     options.add_argument("disable-infobars")
     # Crear una sesión de Chrome
-    driver = webdriver.Chrome(options=options)
+    if platform == "linux" or platform == "linux2":
+        driver = webdriver.Chrome("chromedriver",options=options)
+    elif platform == "darwin":
+        driver = webdriver.Chrome("chromedrivermac",options=options)
+    elif platform == "win32":
+        driver = webdriver.Chrome("chromedriver.exe",options=options)
     driver.implicitly_wait(30)
     driver.maximize_window()
 
@@ -85,14 +91,8 @@ def Scrap(language,cbook,chapter,verse=None):
         except IndexError:
             chosen = random.choice(verses)
         print(chosen.text)
-    driver.execute_script("window.scrollBy(0,{0})".format(chosen.location["y"]-150))
-    try:
-        #Accept cookies
-        driver.find_element(By.CSS_SELECTOR,".legal-notices-client--accept-button").click()
-    except:
-        pass #No cookies
+    driver.execute_script("window.scrollBy(0,{0})".format(chosen.location["y"]-200))
     chosen.click()
-    driver.implicitly_wait(30)
     nav = driver.find_element_by_class_name("navigationContents")
     indexes = nav.find_elements(By.XPATH, '//span[text()="{0}"]'.format(indexname[language]))
     availableI = []
@@ -128,11 +128,6 @@ def Scrap(language,cbook,chapter,verse=None):
         available_chosen = book_chosen+" "+str(verse)
         current_index = availableI.index(available_chosen)
     driver.implicitly_wait(300)
-    try:
-        #Accept cookies
-        driver.find_element(By.CSS_SELECTOR,".legal-notices-client--accept-button").click()
-    except:
-        pass #No cookies
     indexes[current_index].click()
     random_link = random.choice(indexes[current_index].find_element_by_xpath('..').find_element_by_xpath('..').find_element_by_xpath('..').find_elements(By.TAG_NAME,"a"))
     print(random_link.text)
@@ -147,19 +142,21 @@ def Scrap(language,cbook,chapter,verse=None):
         for element in info:
             total += element.text
         print(total)
-        with open('info.txt', 'wb') as f:
-            f.write(available_chosen.encode(encoding='UTF-8',errors='strict')+"\n".encode(encoding='UTF-8',errors='strict')+total.encode(encoding='UTF-8',errors='strict'))
-        driver.quit()
+        if save:
+            with open('info.txt', 'wb') as f:
+                f.write(available_chosen.encode(encoding='UTF-8',errors='strict')+"\n".encode(encoding='UTF-8',errors='strict')+total.encode(encoding='UTF-8',errors='strict'))
+            driver.quit()
     except:
         info = soup.find_all("p", {"class": "sb"})
         total = ""
         for element in info:
             total += element.text
         print(total)
-        with open('info.txt', 'wb') as f:
-            f.write(available_chosen.encode(encoding='UTF-8',errors='strict')+"\n".encode(encoding='UTF-8',errors='strict')+total.encode(encoding='UTF-8',errors='strict'))
-        driver.quit()
+        if save:
+            with open('info.txt', 'wb') as f:
+                f.write(available_chosen.encode(encoding='UTF-8',errors='strict')+"\n".encode(encoding='UTF-8',errors='strict')+total.encode(encoding='UTF-8',errors='strict'))
+            driver.quit()
 if __name__ == "__main__":
-    Scrap(*Inputs())
+    Scrap(*Inputs(),True)
+    #Scrap(*DefaultInputs(),True)
     os.system("pause")
-    #Scrap(*DefaultInputs())
