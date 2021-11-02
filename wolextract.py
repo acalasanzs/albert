@@ -56,7 +56,8 @@ def Scrap(language,cbook,chapter,verse=None):
         pass #No cookies
     # Localizar cuadro de texto
     cbook = driver.find_element(By.XPATH, '//span[text()="{0}"]'.format(cbook))
-    driver.execute_script("window.scrollBy(0,{0})".format(cbook.location["y"]+150))
+    if books[language].index(book_chosen) > 40:
+        driver.execute_script("window.scrollBy(0,{0})".format(cbook.location["y"]+150))
     cbook.click()
     driver.implicitly_wait(1000)
     last = driver.find_elements(By.TAG_NAME,"li")
@@ -85,6 +86,11 @@ def Scrap(language,cbook,chapter,verse=None):
             chosen = random.choice(verses)
         print(chosen.text)
     driver.execute_script("window.scrollBy(0,{0})".format(chosen.location["y"]-150))
+    try:
+        #Accept cookies
+        driver.find_element(By.CSS_SELECTOR,".legal-notices-client--accept-button").click()
+    except:
+        pass #No cookies
     chosen.click()
     driver.implicitly_wait(30)
     nav = driver.find_element_by_class_name("navigationContents")
@@ -121,6 +127,12 @@ def Scrap(language,cbook,chapter,verse=None):
     except:
         available_chosen = book_chosen+" "+str(verse)
         current_index = availableI.index(available_chosen)
+    driver.implicitly_wait(300)
+    try:
+        #Accept cookies
+        driver.find_element(By.CSS_SELECTOR,".legal-notices-client--accept-button").click()
+    except:
+        pass #No cookies
     indexes[current_index].click()
     random_link = random.choice(indexes[current_index].find_element_by_xpath('..').find_element_by_xpath('..').find_element_by_xpath('..').find_elements(By.TAG_NAME,"a"))
     print(random_link.text)
