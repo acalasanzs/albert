@@ -37,14 +37,14 @@ def Inputs():
 def DefaultInputs():
     language = 1
     cbook = "Genesis"
-    chapter = 5
-    verse = 27
+    chapter = 27
+    verse = 16
     return language, cbook, chapter, verse
 def Scrap(language,cbook,chapter,verse=None):
     book_chosen = cbook
     chapter_chosen = chapter
     # Crear una sesión de Chrome
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome('/usr/local/bin/chromedriver')
     driver.implicitly_wait(30)
     driver.maximize_window()
 
@@ -74,7 +74,7 @@ def Scrap(language,cbook,chapter,verse=None):
             print(assgnopts.color.b.red,"Invalid verse, but random chosen instead",assgnopts.color.end)
         chosen = driver.find_elements_by_class_name("v")[chosen-1].find_elements_by_css_selector("*")[0]
         print(chosen.text)
-    driver.execute_script("arguments[0].scrollIntoView();", chosen)
+    driver.execute_script("window.scrollBy(0,{0})".format(chosen.location["y"]-150))
     chosen.click()
     driver.implicitly_wait(30)
     nav = driver.find_element_by_class_name("navigationContents")
@@ -126,5 +126,5 @@ def Scrap(language,cbook,chapter,verse=None):
             f.write(available_chosen.encode(encoding='UTF-8',errors='strict')+"\n".encode(encoding='UTF-8',errors='strict')+total.encode(encoding='UTF-8',errors='strict'))
         driver.quit()
 if __name__ == "__main__":
-    Scrap(*Inputs())
-    #Scrap(*DefaultInputs())
+    #Scrap(*Inputs())
+    Scrap(*DefaultInputs())
