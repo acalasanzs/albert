@@ -1,15 +1,11 @@
 import assgnopts
-#import requests
-#import urllib.request as urllib
 import random
 from assgnopts import Assgn
 from selenium import webdriver
-import selenium
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 import pandas as pd
 from bs4 import BeautifulSoup
-import csv
 import sys
 
 # span attrs={'class':'title ellipsized name'}
@@ -38,35 +34,42 @@ def DefaultInputs():
     language = 1
     cbook = "Proverbs"
     chapter = 11
-    verse = 16
+    verse = 0
     return language, cbook, chapter, verse
 def Scrap(language,cbook,chapter,verse=None):
     book_chosen = cbook
     chapter_chosen = chapter
+    options = webdriver.ChromeOptions()
+    options.add_argument("--disable-notifications")
+    options.add_argument("disable-infobars")
     # Crear una sesión de Chrome
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(options=options)
     driver.implicitly_wait(30)
     driver.maximize_window()
 
     # Acceder a la aplicación web
     driver.get(url[language])
-
+    driver.implicitly_wait(800)
+    try:
+        #Accept cookies
+        driver.find_element(By.CSS_SELECTOR,".legal-notices-client--accept-button").click()
+    except:
+        pass #No cookies
     # Localizar cuadro de texto
     cbook = driver.find_element(By.XPATH, '//span[text()="{0}"]'.format(cbook))
-    driver.execute_script("window.scrollBy(0,{0})".format(cbook.location["y"]-150))
+    driver.execute_script("window.scrollBy(0,{0})".format(cbook.location["y"]+150))
     cbook.click()
-    driver.implicitly_wait(30)
+    driver.implicitly_wait(1000)
     last = driver.find_elements(By.TAG_NAME,"li")
     lastest = max([int(i) if i.isnumeric() else 0 for i in [x.text for x in last]])
     if lastest < chapter:
         driver.quit()
         print(assgnopts.color.b.red,"Invalid chapter",assgnopts.color.end)
     chapter = driver.find_element(By.XPATH, '//*[text()="{0}"]'.format(str(chapter)))
-    driver.execute_script("window.scrollBy(0,{0})".format(chapter.location["y"]-150))
+    driver.execute_script("window.scrollBy(0,{0})".format(chapter.location["y"]-100))
     chapter.click()
     verses = driver.find_elements(By.CSS_SELECTOR,".vp")
-    chosen = int(verses[verse].text)
-    print(chosen)
+    chosen = verse
     if verse is None:
         chosen = random.choice(range(chosen+1))
         chosen = verses[verse]
@@ -74,7 +77,10 @@ def Scrap(language,cbook,chapter,verse=None):
         chosen = verse if verse in list(range(chosen+1)) else random.choice(range(chosen+1))
         if chosen != verse:
             print(assgnopts.color.b.red,"Invalid verse, but random chosen instead",assgnopts.color.end)
-        chosen = verses[verse]
+        try:
+            chosen = verses[verse]
+        except IndexError:
+            chosen = random.choice(verses)
         print(chosen.text)
     driver.execute_script("window.scrollBy(0,{0})".format(chosen.location["y"]-150))
     chosen.click()
@@ -87,9 +93,14 @@ def Scrap(language,cbook,chapter,verse=None):
     for j in indexes:
         availableI.append(j.find_element_by_xpath('..').find_element_by_xpath('..').find_element_by_xpath('..').find_element_by_xpath('..').find_element(By.CLASS_NAME,"scalableui").text)
     for i in availableI:
-        if int(i.split(":")[1]) == verse:
-            available = True
-            break
+        try:
+            if int(i.split(":")[1]) == verse:
+                available = True
+                break
+        except IndexError:
+            if int(i.split(" ")[1]) == verse:
+                available = True
+                break
     if available:
         print(assgnopts.color.b.green,"Chosen verse is vailable on indices",assgnopts.color.end)
         available_chosen = book_chosen+" "+str(chapter_chosen)+":"+str(verse)
@@ -99,7 +110,10 @@ def Scrap(language,cbook,chapter,verse=None):
         for k in availableI:
             print(k)
         available_chosen = random.choice(availableI)
-        print("Verse chosen:",int(available_chosen.split(":")[1]))
+        try:
+            print("Verse chosen:",int(available_chosen.split(":")[1]))
+        except IndexError:
+            print("Verse chosen:",int(available_chosen.split(" ")[1]))
     current_index = availableI.index(available_chosen)
     indexes[current_index].click()
     random_link = random.choice(indexes[current_index].find_element_by_xpath('..').find_element_by_xpath('..').find_element_by_xpath('..').find_elements(By.TAG_NAME,"a"))
