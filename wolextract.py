@@ -78,7 +78,7 @@ def Scrap(language,cbook,chapter,verse=None):
         if chosen != verse:
             print(assgnopts.color.b.red,"Invalid verse, but random chosen instead",assgnopts.color.end)
         try:
-            chosen = verses[verse]
+            chosen = verses[verse-1]
         except IndexError:
             chosen = random.choice(verses)
         print(chosen.text)
@@ -114,7 +114,11 @@ def Scrap(language,cbook,chapter,verse=None):
             print("Verse chosen:",int(available_chosen.split(":")[1]))
         except IndexError:
             print("Verse chosen:",int(available_chosen.split(" ")[1]))
-    current_index = availableI.index(available_chosen)
+    try:
+        current_index = availableI.index(available_chosen)
+    except:
+        available_chosen = book_chosen+" "+str(verse)
+        current_index = availableI.index(available_chosen)
     indexes[current_index].click()
     random_link = random.choice(indexes[current_index].find_element_by_xpath('..').find_element_by_xpath('..').find_element_by_xpath('..').find_elements(By.TAG_NAME,"a"))
     print(random_link.text)
