@@ -36,8 +36,8 @@ def Inputs():
     return language, cbook, chapter.ans, verse
 def DefaultInputs():
     language = 1
-    cbook = "Genesis"
-    chapter = 27
+    cbook = "Proverbs"
+    chapter = 11
     verse = 16
     return language, cbook, chapter, verse
 def Scrap(language,cbook,chapter,verse=None):
@@ -53,6 +53,7 @@ def Scrap(language,cbook,chapter,verse=None):
 
     # Localizar cuadro de texto
     cbook = driver.find_element(By.XPATH, '//span[text()="{0}"]'.format(cbook))
+    driver.execute_script("window.scrollBy(0,{0})".format(cbook.location["y"]-150))
     cbook.click()
     driver.implicitly_wait(30)
     last = driver.find_elements(By.TAG_NAME,"li")
@@ -61,18 +62,19 @@ def Scrap(language,cbook,chapter,verse=None):
         driver.quit()
         print(assgnopts.color.b.red,"Invalid chapter",assgnopts.color.end)
     chapter = driver.find_element(By.XPATH, '//*[text()="{0}"]'.format(str(chapter)))
+    driver.execute_script("window.scrollBy(0,{0})".format(chapter.location["y"]-150))
     chapter.click()
-    verses = driver.find_elements_by_class_name("v")[-1]
-    verses = verses.find_elements_by_css_selector("*")
-    chosen = int(verses[0].text)
+    verses = driver.find_elements(By.CSS_SELECTOR,".vp")
+    chosen = int(verses[verse].text)
+    print(chosen)
     if verse is None:
         chosen = random.choice(range(chosen+1))
-        chosen = driver.find_elements_by_class_name("v")[chosen].find_elements_by_css_selector("*")[0]
+        chosen = verses[verse]
     else:
         chosen = verse if verse in list(range(chosen+1)) else random.choice(range(chosen+1))
         if chosen != verse:
             print(assgnopts.color.b.red,"Invalid verse, but random chosen instead",assgnopts.color.end)
-        chosen = driver.find_elements_by_class_name("v")[chosen-1].find_elements_by_css_selector("*")[0]
+        chosen = verses[verse]
         print(chosen.text)
     driver.execute_script("window.scrollBy(0,{0})".format(chosen.location["y"]-150))
     chosen.click()
@@ -126,5 +128,5 @@ def Scrap(language,cbook,chapter,verse=None):
             f.write(available_chosen.encode(encoding='UTF-8',errors='strict')+"\n".encode(encoding='UTF-8',errors='strict')+total.encode(encoding='UTF-8',errors='strict'))
         driver.quit()
 if __name__ == "__main__":
-    #Scrap(*Inputs())
-    Scrap(*DefaultInputs())
+    Scrap(*Inputs())
+    #Scrap(*DefaultInputs())
