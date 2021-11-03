@@ -69,9 +69,10 @@ def Scrap(language,cbook,chapter,verse=None,save=False):
     last = driver.find_elements(By.TAG_NAME,"li")
     lastest = max([int(i) if i.isnumeric() else 0 for i in [x.text for x in last]])
     if lastest < chapter:
-        driver.quit()
+        chapter = driver.find_element(By.XPATH, '//*[text()="{0}"]'.format(str(random.choice(range(lastest+1)))))
         print(assgnopts.color.b.red,"Invalid chapter",assgnopts.color.end)
-    chapter = driver.find_element(By.XPATH, '//*[text()="{0}"]'.format(str(chapter)))
+    else:
+        chapter = driver.find_element(By.XPATH, '//*[text()="{0}"]'.format(str(chapter)))
     driver.execute_script("window.scrollBy(0,{0})".format(chapter.location["y"]-100))
     chapter.click()
     if language == 2:
@@ -156,6 +157,7 @@ def Scrap(language,cbook,chapter,verse=None,save=False):
             with open('info.txt', 'wb') as f:
                 f.write(available_chosen.encode(encoding='UTF-8',errors='strict')+"\n".encode(encoding='UTF-8',errors='strict')+total.encode(encoding='UTF-8',errors='strict'))
             driver.quit()
+    return (available_chosen,total)
 if __name__ == "__main__":
     Scrap(*Inputs(),True)
     #Scrap(*DefaultInputs(),True)
