@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(['wolextract.py'],
-             pathex=['D:\\Documentos\\Dev\\JW'],
+             pathex=[],
              binaries=[],
              datas=[],
              hiddenimports=[],
